@@ -9,7 +9,7 @@ import { CodeEditorModule, CodeModel } from '@ngstack/code-editor';
   standalone: true,
   imports: [ReactiveFormsModule, FormsModule, CodeEditorModule],
   templateUrl: './code-editor.component.html',
-  styleUrl: './code-editor.component.css',
+  styleUrls: ['./code-editor.component.css'],
 })
 export class CodeEditorComponent implements OnInit {
   textEditorData = new FormControl('');
