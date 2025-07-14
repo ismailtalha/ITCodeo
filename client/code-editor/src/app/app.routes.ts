@@ -4,5 +4,9 @@ import { EnvironmentComponent } from './environment/environment.component';
 
 export const routes: Routes = [
   { path: 'create', component: CreateProjectComponent },
-  { path: 'environment', component: EnvironmentComponent },
+  {
+    path: 'environment/:user/:projectname/:containerId',
+    component: EnvironmentComponent,
+  },
+  { path: '', redirectTo: '/create', pathMatch: 'full' },
 ];

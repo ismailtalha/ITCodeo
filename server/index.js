@@ -134,7 +134,7 @@ app.post("/api/spawn", async (req, res) => {
   }
 
   const containerId = await runUserContainer(language, username, projectName);
-  res.json({ containerId });
+  res.json({ containerId: containerId });
 });
 
 app.get("/", (req, res) => {
@@ -142,7 +142,8 @@ app.get("/", (req, res) => {
 });
 
 app.get("/getFiles", async (req, res) => {
-  let trees = await getFileTree("./user");
+  let path = "./" + req.query.path || "./user";
+  let trees = await getFileTree(path);
   res.send(trees);
 });
 

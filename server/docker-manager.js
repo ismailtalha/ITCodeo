@@ -32,11 +32,43 @@ async function runUserContainer(language, username, projectName) {
   });
 
   await container.start();
+  if (language === "node") {
+    await execInContainer(container, ["npm", "init", "-y"]);
+    await execInContainer(container, [
+      "sh",
+      "-c",
+      'echo "console.log(\\"Hello from Node.js\\")" > index.js',
+    ]);
+  }
   return container.id;
 }
 
 function sanitizeName(input) {
   return input.trim().replace(/[\/\\:*?"<>|]/g, ""); // Windows + Linux unsafe chars
+}
+
+async function execInContainer(container, cmdArray, workdir = "/home/appuser") {
+  const exec = await container.exec({
+    Cmd: cmdArray,
+    AttachStdout: true,
+    AttachStderr: true,
+    WorkingDir: workdir,
+  });
+
+  const stream = await exec.start({});
+
+  return new Promise((resolve, reject) => {
+    let output = "";
+    stream.on("data", (chunk) => {
+      output += chunk.toString();
+    });
+
+    stream.on("end", () => {
+      resolve(output.trim());
+    });
+
+    stream.on("error", reject);
+  });
 }
 
 module.exports = { runUserContainer };

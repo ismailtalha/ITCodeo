@@ -43,15 +43,13 @@ export class CreateProjectComponent implements OnInit {
         .subscribe({
           next: (response) => {
             console.log('Playground created successfully:', response);
-            alert(
-              `Playground created successfully for ${username} in ${language} with project name ${projectName}`
-            );
-            this.router.navigate(['/environment'], {
-              queryParams: {
-                projectName,
-                username,
-              },
-            });
+
+            this.router.navigate([
+              '/environment',
+              username,
+              projectName,
+              response.containerId,
+            ]);
           },
           error: (error) => {
             console.error('Error creating playground:', error);
