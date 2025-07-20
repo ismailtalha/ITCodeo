@@ -1,0 +1,33 @@
+.terminal-container {
+  width: 100%;
+  height: 20vh;
+  background-color: black;
+}
+
+.layout-container {
+  display: flex;
+  height: 80vh; // full screen height
+  width: 100vw;
+
+  .left-panel {
+    flex: 0 0 20%;
+    padding: 10px;
+    border-right: 1px solid #ccc;
+    overflow-y: auto;
+  }
+
+  .center-panel {
+    flex: 1;
+    padding: 10px;
+    border-right: 1px solid #ccc;
+    overflow-y: auto;
+  }
+
+  .right-panel {
+    flex: 0 0 30%;
+    padding: 10px;
+    overflow-y: auto;
+    background-color: #5c5c5c;
+    color: #0f0;
+  }
+}

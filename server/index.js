@@ -2,11 +2,13 @@ const express = require("express");
 const httpServer = require("http");
 const { Server } = require("socket.io");
 const pty = require("node-pty");
-const fs = require("fs").promises;
+const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
 const chokidar = require("chokidar");
-const { VM } = require("vm2");
+const { runUserContainer } = require("./docker-manager"); // Adjust the path as needed
+const Docker = require("dockerode");
+const docker = new Docker();
 
 const app = express();
 const server = httpServer.createServer(app);
@@ -35,7 +37,7 @@ var ptyProcess = pty.spawn(shell, [], {
   name: "xterm-color",
   cols: 80,
   rows: 30,
-  cwd: process.env.INIT_CWD + "./user",
+  cwd: process.env.INIT_CWD + "./user_projects",
   env: process.env,
 });
 
@@ -74,12 +76,74 @@ io.on("connection", (socket) => {
   });
 });
 
+//routes
+
+app.post("/api/run", async (req, res) => {
+  const { userId, language, code, containerId, projectname } = req.body;
+  const filename = language === "node" ? "app.js" : "script.py";
+  const command =
+    language === "node" ? `node ${filename}` : `python ${filename}`;
+  const userDir = path.join(
+    __dirname,
+    "..",
+    "server/user_projects",
+    userId,
+    projectname
+  );
+
+  console.log(`Running code in ${userDir} with command: ${command}`);
+  // Write code to file in user's folder
+  if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
+  fs.writeFileSync(path.join(userDir, filename), code);
+
+  // Get existing container
+  const container = docker.getContainer(containerId);
+
+  // Execute code inside container
+  const exec = await container.exec({
+    Cmd: ["bash", "-c", command],
+    AttachStdout: true,
+    AttachStderr: true,
+  });
+
+  exec.start((err, stream) => {
+    let output = "";
+
+    stream.on("data", (chunk) => (output += chunk.toString()));
+    stream.on("end", () => res.json({ output }));
+    stream.on("error", (e) => res.status(500).send(e.message));
+  });
+});
+
+app.post("/api/spawn", async (req, res) => {
+  const { language, username, projectName } = req.body;
+  if (!language || !username || !projectName)
+    return res.status(400).send("Missing language, username or projectName");
+
+  // Check if folder exists
+  const safeUsername = sanitizeName(username);
+  const safeProjectName = sanitizeName(projectName);
+  const userProjectPath = path.join(
+    __dirname,
+    "user_projects",
+    safeUsername,
+    safeProjectName
+  );
+  if (fs.existsSync(userProjectPath)) {
+    return res.status(409).send("Project folder already exists");
+  }
+
+  const containerId = await runUserContainer(language, username, projectName);
+  res.json({ containerId: containerId });
+});
+
 app.get("/", (req, res) => {
   res.send("Socket.IO Server is running.");
 });
 
 app.get("/getFiles", async (req, res) => {
-  let trees = await getFileTree("./user");
+  let path = "./" + req.query.path || "./user";
+  let trees = await getFileTree(path);
   res.send(trees);
 });
 
@@ -144,29 +208,6 @@ async function getFileContent(filePath) {
   }
 }
 
-function runCode(code) {
-  let output = "";
-  const vm = new VM({
-    timeout: 1000,
-    sandbox: {
-      console: {
-        log: (...args) => {
-          output += args.join(" ") + "\n";
-        },
-        error: (...args) => {
-          output += "[Error] " + args.join(" ") + "\n";
-        },
-      },
-      alert: (msg) => {
-        output += "[Alert] " + msg + "\n";
-      },
-    },
-  });
-
-  try {
-    vm.run(code);
-    return output;
-  } catch (err) {
-    output += "Runtime Error: " + err.message;
-  }
+function sanitizeName(input) {
+  return input.trim().replace(/[\/\\:*?"<>|]/g, ""); // Windows + Linux unsafe chars
 }
