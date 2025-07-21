@@ -8,6 +8,7 @@ import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { ApiService } from '../api.service';
 import { SocketService } from '../socket.service';
 import { DataService } from '../data.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 /**
  * Food data with nested structure.
@@ -31,14 +32,24 @@ export class FileExplorerComponent implements OnInit {
   constructor(
     private api: ApiService,
     private socketService: SocketService,
-    private sharedData: DataService
+    private sharedData: DataService,
+    private route: ActivatedRoute
   ) {}
   ngOnInit() {
     this.getData();
     this.listensocket();
   }
   getData(): void {
-    this.api.getfiles().subscribe((data) => {
+    const user = this.route.snapshot.paramMap.get('user');
+    const projectname = this.route.snapshot.paramMap.get('projectname');
+    const containerId = this.route.snapshot.paramMap.get('containerId');
+    if (!user || !projectname || !containerId) {
+      console.error('Missing route parameters');
+      return;
+    }
+    let folderPath = `${user}/${projectname}`;
+    debugger;
+    this.api.getfiles(folderPath).subscribe((data) => {
       console.log('Data received:', data);
       this.dataSource = data;
     });
@@ -73,9 +84,11 @@ export class FileExplorerComponent implements OnInit {
   }
 
   onNodeClick(node: FoodNode) {
-    const fullPath = this.getNodePath(this.dataSource, node);
+    const fullPath =
+      this.getFullFilePath() + this.getNodePath(this.dataSource, node);
     if (fullPath) {
-      this.getFileContent(fullPath.join('/'));
+      debugger;
+      this.getFileContent(fullPath);
     }
   }
   getNodePath(
@@ -127,5 +140,17 @@ export class FileExplorerComponent implements OnInit {
         alert('Error setting up compiler: ' + error.message);
       },
     });
+  }
+  getFullFilePath() {
+    let folderPath = '';
+    const user = this.route.snapshot.paramMap.get('user');
+    const projectname = this.route.snapshot.paramMap.get('projectname');
+    const containerId = this.route.snapshot.paramMap.get('containerId');
+    if (!user || !projectname || !containerId) {
+      console.error('Missing route parameters');
+      return folderPath;
+    }
+    folderPath = `${user}/${projectname}/`;
+    return folderPath;
   }
 }

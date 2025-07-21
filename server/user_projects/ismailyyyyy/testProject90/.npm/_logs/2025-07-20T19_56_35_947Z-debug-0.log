@@ -1,0 +1,27 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@10.8.2
+2 info using node@v20.19.3
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/home/appuser/.npmrc
+5 silly config load:file:/usr/local/etc/npmrc
+6 verbose title npm init
+7 verbose argv "init" "--yes"
+8 verbose logfile logs-max:10 dir:/home/appuser/.npm/_logs/2025-07-20T19_56_35_947Z-
+9 verbose logfile /home/appuser/.npm/_logs/2025-07-20T19_56_35_947Z-debug-0.log
+10 silly logfile done cleaning log files
+11 silly package data {
+11 silly package data   name: 'appuser',
+11 silly package data   version: '1.0.0',
+11 silly package data   main: 'index.js',
+11 silly package data   scripts: { test: 'echo "Error: no test specified" && exit 1' },
+11 silly package data   keywords: [],
+11 silly package data   author: '',
+11 silly package data   license: 'ISC',
+11 silly package data   description: ''
+11 silly package data }
+12 verbose cwd /home/appuser
+13 verbose os Linux 5.15.167.4-microsoft-standard-WSL2
+14 verbose node v20.19.3
+15 verbose npm  v10.8.2
+16 verbose exit 0
+17 info ok

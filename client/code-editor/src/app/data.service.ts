@@ -1,15 +1,17 @@
 import { Injectable } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DataService {
-  constructor() {}
+  constructor(private route: ActivatedRoute) {}
 
   private dataSubject = new BehaviorSubject<any>(null);
   private filepathSubject = new BehaviorSubject<any>(null);
   private outputSubject = new BehaviorSubject<any>(null);
+  private filepath: string = '';
 
   // Expose as read-only Observable
   data$: Observable<any> = this.dataSubject.asObservable();

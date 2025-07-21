@@ -8,8 +8,8 @@ import { Observable } from 'rxjs';
 export class ApiService {
   constructor(private http: HttpClient) {}
 
-  getfiles(): Observable<any> {
-    return this.http.get('http://localhost:3000/getFiles');
+  getfiles(folderPath: string): Observable<any> {
+    return this.http.get(`http://localhost:3000/getFiles?path=${folderPath}`);
   }
 
   getFileContent(filePath: string): Observable<any> {

@@ -2,16 +2,18 @@ const express = require("express");
 const httpServer = require("http");
 const { Server } = require("socket.io");
 const pty = require("node-pty");
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 const cors = require("cors");
 const chokidar = require("chokidar");
 const { runUserContainer } = require("./docker-manager"); // Adjust the path as needed
 const Docker = require("dockerode");
+const { isFolderExists } = require("./utils");
 const docker = new Docker();
 
 const app = express();
 const server = httpServer.createServer(app);
+const workspaceDir = path.join(__dirname);
 let buffer = "";
 let flushTimeout = null;
 
@@ -93,7 +95,8 @@ app.post("/api/run", async (req, res) => {
 
   console.log(`Running code in ${userDir} with command: ${command}`);
   // Write code to file in user's folder
-  if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
+  if (!(await fs.existsSync(userDir)))
+    fs.mkdirSync(userDir, { recursive: true });
   fs.writeFileSync(path.join(userDir, filename), code);
 
   // Get existing container
@@ -129,9 +132,14 @@ app.post("/api/spawn", async (req, res) => {
     safeUsername,
     safeProjectName
   );
-  if (fs.existsSync(userProjectPath)) {
+  console.log("userProjectPath:", userProjectPath);
+  const checkFileExist = await isFolderExists(userProjectPath);
+  console.log(checkFileExist);
+  if (checkFileExist) {
     return res.status(409).send("Project folder already exists");
   }
+
+  console.log("jjjjjjjjjjjjj");
 
   const containerId = await runUserContainer(language, username, projectName);
   res.json({ containerId: containerId });
@@ -142,21 +150,23 @@ app.get("/", (req, res) => {
 });
 
 app.get("/getFiles", async (req, res) => {
-  let path = "./" + req.query.path || "./user";
-  let trees = await getFileTree(path);
-  res.send(trees);
+  let fullPath = path.join(__dirname, "user_projects", req.query.path || "");
+  console.log("Fetching files from path:", fullPath);
+  let files = await getFileTree(fullPath);
+  res.send(files);
 });
 
 app.get("/getFileContent", async (req, res) => {
-  let filePath = path.join(__dirname, "user", req.query.filePath);
+  let filePath = path.join(__dirname, "user_projects", req.query.filePath);
   let fileContent = await getFileContent(filePath);
   res.send({ data: fileContent });
 });
 
 app.post("/setFileContent", async (req, res) => {
   let fileContent = req.body.content;
-  let filePath = path.join(__dirname, "user", req.body.filePath);
+  let filePath = path.join(__dirname, "user_projects", req.body.filePath);
   // Ensure the directory exists
+  console.log("Saving file content to:", filePath);
   await fs.writeFile(filePath, fileContent, "utf8");
   // let result = runCode(fileContent);
   res.send({ code: 200, msg: "File saved successfully" });
@@ -166,7 +176,7 @@ app.post("/createCompiler", async (req, res) => {
   let language = req.body.language;
   let indexjsfilePath = path.join(__dirname, "user", "index.js");
   // Ensure the directory exists
-  await fs.writeFile(indexjsfilePath, "", "utf8");
+  fs.writeFile(indexjsfilePath, "", "utf8");
   res.send({ code: 200, msg: "Compiler created successfully" });
 });
 

@@ -2,6 +2,7 @@ const Docker = require("dockerode");
 const fs = require("fs");
 const docker = new Docker();
 const path = require("path");
+const { isFolderExists } = require("./utils");
 
 async function runUserContainer(language, username, projectName) {
   const image = language === "python" ? "replit-python" : "replit-node";
@@ -16,8 +17,9 @@ async function runUserContainer(language, username, projectName) {
   );
 
   console.log(`userFolder: ${userFolder}`);
+  const folderExists = await isFolderExists(userFolder);
 
-  if (!fs.existsSync(userFolder)) fs.mkdirSync(userFolder, { recursive: true });
+  if (!folderExists) fs.mkdirSync(userFolder, { recursive: true });
 
   const container = await docker.createContainer({
     Image: image,
